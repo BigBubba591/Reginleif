@@ -2798,7 +2798,7 @@ GDScriptParser::MatchNode *GDScriptParser::parse_match() {
 		push_error(R"(Expected expression to test after "match".)");
 	}
 
-	bool use_braces = brace_check();
+	bool use_braces = brace_check(true);
 
 	if (use_braces) {
 		advance();
@@ -4423,7 +4423,7 @@ GDScriptParser::ImplNode* GDScriptParser::parse_impl() {
 	///otherwise it must be `impl Trait` form, in-class, and thus impl_target_type stays null
 	///(because it targets the type this is happening on itself)
 
-	bool use_braces = brace_check();
+	bool use_braces = brace_check(true);
 	if (!use_braces) {
 		consume(GDScriptTokenizer::Token::COLON, R"([Reginleif] Expected ":" or "{" after impl declaration.)");
 	}
