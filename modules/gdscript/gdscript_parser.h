@@ -1716,7 +1716,7 @@ private:
 	GDScriptTokenizer::Token advance();
 	bool match(GDScriptTokenizer::Token::Type p_token_type);
 	bool check(GDScriptTokenizer::Token::Type p_token_type) const;
-	bool allman_check();
+	bool allman_check(bool should_advance);
 	bool consume(GDScriptTokenizer::Token::Type p_token_type, const String &p_error_message);
 	bool is_at_end() const;
 	bool is_statement_end_token() const;
@@ -1774,7 +1774,7 @@ private:
 	bool rpc_annotation(AnnotationNode *p_annotation, Node *p_target, ClassNode *p_class);
 	// Statements.
 
-	bool brace_check();
+	bool brace_check(bool should_advance = false);
 
 	Node *parse_statement();
 	VariableNode *parse_variable(bool p_is_static);

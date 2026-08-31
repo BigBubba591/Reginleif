@@ -625,12 +625,15 @@ bool GDScriptParser::check(GDScriptTokenizer::Token::Type p_token_type) const {
 	return current.type == p_token_type;
 }
 
-bool GDScriptParser::allman_check() {
+bool GDScriptParser::allman_check(bool should_advance) {
 	if (!check(GDScriptTokenizer::Token::NEWLINE)) {
 		return false;
 	}
 
-	auto allman_check = advance();
+	if (should_advance) {
+		advance();
+	}
+
 	if (check(GDScriptTokenizer::Token::BRACE_OPEN)) {
 		return true;
 	}
@@ -1029,7 +1032,7 @@ GDScriptParser::ClassNode *GDScriptParser::parse_class(bool p_is_static) {
 	}
 
 	///
-	bool use_braces = brace_check();
+	bool use_braces = brace_check(true);
 	if (!use_braces) {
 		consume(GDScriptTokenizer::Token::COLON, R"([Reginleif] Expected ":" or "{" after class declaration.)");
 	}
@@ -2037,12 +2040,8 @@ bool GDScriptParser::parse_function_signature(FunctionNode *p_function, SuiteNod
 		return consume(GDScriptTokenizer::Token::COLON, R"([Reginleif] Expected ":" or "{" after lambda declaration.)");
 	}
 
-	if (allman_check()) {
-		return true;
-	}
-
 	// The colon may not be present in the case of abstract functions.
-	if (brace_check()) {
+	if (brace_check(true)) {
 		return true; ///Monarch: brace block coming, so no colon is needed, so this can just be true
 	}
 	return match(GDScriptTokenizer::Token::COLON);
@@ -2400,8 +2399,11 @@ GDScriptParser::SuiteNode *GDScriptParser::parse_suite(const String &p_context, 
 	return suite;
 }
 
-bool GDScriptParser::brace_check() {
-	return check(GDScriptTokenizer::Token::BRACE_OPEN) || allman_check();
+bool GDScriptParser::brace_check(bool should_advance) {
+	if (check(GDScriptTokenizer::Token::COLON)) {
+		return false;
+	}
+	return check(GDScriptTokenizer::Token::BRACE_OPEN) || allman_check(should_advance);
 }
 
 GDScriptParser::Node *GDScriptParser::parse_statement() {
@@ -2684,7 +2686,7 @@ GDScriptParser::ForNode *GDScriptParser::parse_for() {
 	if (match(GDScriptTokenizer::Token::COLON)) {
 		n_for->datatype_specifier = parse_type();
 		if (n_for->datatype_specifier == nullptr) {
-			if (!brace_check()){
+			if (!brace_check(true)){
 				consume(GDScriptTokenizer::Token::COLON, vformat(R"([Reginleif] Expected ":" or "{" after "for")"));
 			}
 		}
@@ -2702,7 +2704,7 @@ GDScriptParser::ForNode *GDScriptParser::parse_for() {
 		push_error(R"(Expected iterable after "in".)");
 	}
 
-	if (!brace_check() && !match(GDScriptTokenizer::Token::COLON)
+	if (!brace_check(true) && !match(GDScriptTokenizer::Token::COLON)
 	) {
 		push_error(vformat(R"([Reginleif] Expected ":" or "{" after "for" condition, found "%s" instead.)", current.get_name()), current);
 	}
@@ -2744,7 +2746,7 @@ GDScriptParser::IfNode *GDScriptParser::parse_if(const String &p_token) {
 
 	/// [Monarch] The evil entity that I am, we are adding BRACES AHAHAHAAA
 	/// [Bubba] I AM EVILER. MASTER OF ALL-MEN
-	if (!brace_check() && !match(GDScriptTokenizer::Token::COLON)) {
+	if (!brace_check(true) && !match(GDScriptTokenizer::Token::COLON)) {
 		push_error(vformat(R"([Reginleif] Expected ":" or "{" after "%s" condition, found "%s" instead.)", p_token, current.get_name()), current);
 	}
 
@@ -2771,7 +2773,7 @@ GDScriptParser::IfNode *GDScriptParser::parse_if(const String &p_token) {
 		current_suite = previous_suite;
 	} else if (match(GDScriptTokenizer::Token::ELSE)) {
 		///
-		if (!brace_check()){
+		if (!brace_check(true)){
 			consume(GDScriptTokenizer::Token::COLON, vformat(R"([Reginleif] Expected ":" or "{" after 'else'.)"));
 		}
 		n_if->false_block = parse_suite(R"("else" block)");
@@ -2960,7 +2962,7 @@ GDScriptParser::MatchBranchNode *GDScriptParser::parse_match_branch() {
 	}
 
 	///
-	if (!brace_check()){
+	if (!brace_check(true)){
 		if (!consume(GDScriptTokenizer::Token::COLON, vformat(R"([Reginleif] Expected ":" or "{"%s after "match" %s.)", has_guard ? "" : R"( or "when")", has_guard ? "pattern guard" : "patterns"))) {
 			branch->block = alloc_recovery_suite();
 			complete_extents(branch);
@@ -3145,7 +3147,7 @@ GDScriptParser::WhileNode *GDScriptParser::parse_while() {
 		push_error(R"(Expected conditional expression after "while".)");
 	}
 
-	if (!brace_check() && !match(GDScriptTokenizer::Token::COLON)) {
+	if (!brace_check(true) && !match(GDScriptTokenizer::Token::COLON)) {
 		push_error(vformat(R"([Reginleif] Expected ":" or "{" after "while" condition, found "%s" instead.)", current.get_name()), current);
 	}
 
@@ -4151,7 +4153,7 @@ GDScriptParser::ExpressionNode *GDScriptParser::parse_lambda(ExpressionNode *p_p
 	current_suite = body;
 
 	const bool has_body = parse_function_signature(function, body, "lambda", -1);
-	const bool has_brace_body = has_body && brace_check();
+	const bool has_brace_body = has_body && brace_check(false);
 
 	current_suite = previous_suite;
 
