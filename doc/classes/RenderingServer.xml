@@ -1829,7 +1829,7 @@
 			<return type="bool" />
 			<param index="0" name="feature" type="String" />
 			<description>
-				Returns [code]true[/code] if the OS supports a certain [param feature]. Features might be [code]s3tc[/code], [code]etc[/code], and [code]etc2[/code].
+				Returns [code]true[/code] if the OS supports a certain [param feature]. Features might be [code]s3tc[/code], [code]rgtc[/code], [code]bptc[/code], [code]etc[/code], [code]etc2[/code], [code]astc[/code], and [code]astc_hdr[/code].
 			</description>
 		</method>
 		<method name="instance_attach_object_instance_id">
@@ -2430,11 +2430,11 @@
 				[codeblock]
 				{
 					# Required:
-				    "primitive": RenderingServer.PrimitiveType,
-				    "format": RenderingServer.ArrayFormat,
-				    "vertex_data": PackedByteArray,
-				    "vertex_count": int,
-				    "aabb": AABB,
+					"primitive": RenderingServer.PrimitiveType,
+					"format": RenderingServer.ArrayFormat,
+					"vertex_data": PackedByteArray,
+					"vertex_count": int,
+					"aabb": AABB,
 
 					# Optional:
 					"attribute_data": PackedByteArray,
